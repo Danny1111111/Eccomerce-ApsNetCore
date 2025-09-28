@@ -1,0 +1,84 @@
+﻿@using EcommerceWebApp.Models.Dtos
+@using EcommerceWebApp.AppGlobals
+@model OrderDTO
+@{
+    Layout = "_Layout";
+}
+
+@section top {
+    <div class="bg-light py-3 border-bottom shadow-sm mb-4">
+        <div class="container">
+            <h3 class="text-center text-muted mb-0">Order <strong>@Model.Code</strong></h3>
+        </div>
+    </div>
+}
+
+<div class="row">
+    <ul class="list-group col-sm-8">
+        <li class="list-group-item list-group-item-primary">Products</li>
+        @foreach (KeyValuePair<OrderItemDTO, int> kvp in ViewBag.Products)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a href=@Url.Action("Details", "Products", new { id = kvp.Key.ProductId }) class="text-dark nounderline">@kvp.Key.ProductBrand @kvp.Key.ProductName</a>
+                @if (kvp.Value > 1)
+                {
+                    <span class="badge badge-primary badge-pill">@kvp.Value unit(s)</span>
+                }
+            </li>
+        }
+    </ul>
+    <ul class="list-group col-sm-4">
+        <li class="list-group-item list-group-item-primary">Status</li>
+        @if (Model.IsPaid)
+        {
+            <li class="list-group-item list-group-item-success d-flex">
+                Paid - @Model.TotalAmount.ToString("C")
+            </li>
+        }
+        else
+        {
+            <li class="list-group-item list-group-item-danger d-flex">
+                UnPaid - @Model.TotalAmount.ToString("C")
+            </li>
+        }
+
+        <li class="list-group-item list-group-item d-flex">
+            Status  - @Model.OrderStatus
+        </li>
+        @using (Html.BeginForm("Cancel", "Orders", new { code = Model.Code }, FormMethod.Post, true, new { id = "cancelForm" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <!-- Hidden field to simulate DELETE -->
+            <input type="hidden" name="_method" value="DELETE" />
+
+            <button type="submit" class="btn btn-danger">Cancel Order</button>
+        }
+
+
+    </ul>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // This submits the form with DELETE request when clicking the "Cancel Order" button.
+            $('#cancelForm').submit(function (event) {
+                event.preventDefault();
+                var form = $(this);
+                $.ajax({
+                    url: form.attr('action'),
+                    console.log(form.attr('action'));
+                    type: 'DELETE',
+                    data: form.serialize(),
+                    success: function (data) {
+                        window.location.href = '@Url.Action("Index", "Orders")';
+                    },
+                    error: function (error) {
+                        alert('Error: ' + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}
